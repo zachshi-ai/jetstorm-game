@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f16">
+<title>喷气风暴 · 特斯拉飞行赛车</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;overflow:hidden;background:#05070b;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue","PingFang SC","Noto Sans SC",sans-serif;
+    color:#eef3fb;touch-action:none;user-select:none}
+  #scene{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+  .hud{position:fixed;inset:0;pointer-events:none;padding:calc(env(safe-area-inset-top) + 14px) 18px calc(env(safe-area-inset-bottom) + 12px)}
+  .top{display:flex;justify-content:space-between;align-items:flex-start}
+  .chip{background:rgba(10,16,26,.42);border:1px solid rgba(140,190,255,.16);backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);border-radius:14px;padding:9px 14px;box-shadow:0 8px 26px rgba(0,0,0,.35)}
+  .lbl{font-size:9.5px;letter-spacing:.22em;color:#7d93b4;text-transform:uppercase;font-weight:700}
+  .val{font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+    background:linear-gradient(180deg,#fff,#a9c6ea);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.15}
+  .val small{font-size:11px;font-weight:700;color:#8ea6c6;-webkit-text-fill-color:#8ea6c6;margin-left:3px}
+  .row{display:flex;gap:10px}
+  .col{text-align:right}
+
+  .bottom{position:absolute;left:18px;right:18px;bottom:calc(env(safe-area-inset-bottom) + 12px)}
+  .meters{display:flex;align-items:flex-end;gap:14px;margin-bottom:12px}
+  .speedbox{flex:0 0 auto}
+  .spd{font-size:52px;font-weight:900;line-height:.86;letter-spacing:-.04em;font-variant-numeric:tabular-nums;
+    text-shadow:0 0 22px rgba(90,190,255,.45),0 4px 18px rgba(0,0,0,.6)}
+  .spd small{font-size:12px;font-weight:800;color:#8ea6c6;letter-spacing:.1em;margin-left:4px}
+  .bars{flex:1;display:flex;flex-direction:column;gap:7px;padding-bottom:6px}
+  .bar{height:7px;border-radius:99px;background:rgba(255,255,255,.10);overflow:hidden;
+    border:1px solid rgba(255,255,255,.07)}
+  .bar i{display:block;height:100%;border-radius:99px;transition:width .08s linear}
+  #energyFill{background:linear-gradient(90deg,#25e6ff,#6df0c2);box-shadow:0 0 16px rgba(45,220,255,.7)}
+  .capt{font-size:9px;letter-spacing:.2em;color:#7d93b4;font-weight:800;text-transform:uppercase}
+
+  .controls{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 8px);
+    display:flex;justify-content:space-between;align-items:flex-end;padding:0 16px;pointer-events:none}
+  .pad{width:74px;height:74px;border-radius:22px;pointer-events:auto;display:grid;place-items:center;
+    background:rgba(12,20,32,.5);border:1px solid rgba(150,200,255,.22);backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);font-size:26px;font-weight:800;color:#cfe2fb;
+    box-shadow:0 10px 30px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.09)}
+  .pad:active{background:rgba(60,150,255,.30);transform:scale(.96)}
+  .jet{width:96px;height:96px;border-radius:50%;pointer-events:auto;display:grid;place-items:center;
+    background:radial-gradient(circle at 50% 32%,rgba(70,220,255,.42),rgba(10,26,40,.75) 70%);
+    border:1.5px solid rgba(110,230,255,.55);color:#dbfaff;font-size:11px;font-weight:900;letter-spacing:.14em;
+    box-shadow:0 0 34px rgba(40,200,255,.35),inset 0 1px 0 rgba(255,255,255,.18)}
+  .jet:active{transform:scale(.94);box-shadow:0 0 54px rgba(60,220,255,.6)}
+
+  .screen{position:fixed;inset:0;display:grid;place-items:center;padding:28px;
+    background:radial-gradient(120% 90% at 50% 0%,rgba(12,26,44,.72),rgba(3,5,9,.94));
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:10;transition:opacity .35s}
+  .screen.hide{opacity:0;pointer-events:none}
+  .card{width:100%;max-width:430px;text-align:center}
+  .kicker{font-size:10.5px;letter-spacing:.42em;color:#5fd0ff;font-weight:800;margin-bottom:14px}
+  h1{margin:0;font-size:43px;line-height:.95;letter-spacing:-.035em;font-weight:900;
+    background:linear-gradient(180deg,#ffffff 10%,#8fb6e0 92%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin:14px 0 26px;font-size:13.5px;line-height:1.72;color:#9db0c9}
+  .sub b{color:#e8f2ff}
+  .btn{display:inline-block;padding:16px 46px;border-radius:16px;font-size:15px;font-weight:900;letter-spacing:.12em;
+    color:#04121c;background:linear-gradient(180deg,#7ff0ff,#25c4f5);border:none;
+    box-shadow:0 14px 40px rgba(35,190,240,.35),inset 0 1px 0 rgba(255,255,255,.6);cursor:pointer}
+  .btn:active{transform:scale(.97)}
+  .tips{margin-top:22px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .tip{background:rgba(255,255,255,.045);border:1px solid rgba(140,190,255,.12);border-radius:12px;padding:10px 6px}
+  .tip i{display:block;font-size:15px;font-style:normal;margin-bottom:5px}
+  .tip span{font-size:10.5px;color:#94a9c4;line-height:1.45}
+  #overStats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:22px 0 26px}
+  #overStats div{background:rgba(255,255,255,.045);border:1px solid rgba(140,190,255,.12);border-radius:13px;padding:12px}
+  #overStats span{display:block;font-size:10px;letter-spacing:.16em;color:#7d93b4;font-weight:800;margin-bottom:5px}
+  #overStats b{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;color:#eaf4ff}
+  .best{margin-top:16px;font-size:11px;color:#6f86a6;letter-spacing:.14em;font-weight:700}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<div class="hud">
+  <div class="top">
+    <div class="row">
+      <div class="chip"><div class="lbl">得分</div><div class="val" id="score">0</div></div>
+      <div class="chip"><div class="lbl">距离</div><div class="val" id="dist">0 米</div></div>
+    </div>
+    <div class="chip col"><div class="lbl">x</div><div class="val" id="best">0 米</div></div>
+  </div>
+
+  <div class="bottom">
+    <div class="meters">
+      <div class="speedbox">
+        <div class="spd"><span id="speedNum">0</span><small>公里/时</small></div>
+      </div>
+      <div class="bars">
+        <div class="capt">喷气推力</div>
+        <div class="bar"><i id="energyFill" style="width:100%"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="pad" id="btnLeft">‹</div>
+    <div class="jet" id="btnJet">喷气</div>
+    <div class="pad" id="btnRight">›</div>
+  </div>
+</div>
+
+<div class="screen" id="start">
+  <div class="card">
+    <div class="kicker">特斯拉喷气计划 · 夜间试跑</div>
+    <h1>喷气风暴<br>夜空竞速</h1>
+    <p class="sub">你驾驶的是<b>特斯拉喷气飞行原型车</b>。<br>
+      水泥路障、货运集装箱、悬挂横杆——统统飞过去。<br>
+      穿过<b>能量门</b>补推力，穿过<b>空中光环</b>拿特技分。</p>
+    <button class="btn" id="btnStart">开始冲刺</button>
+    <div class="tips">
+      <div class="tip"><i>⇦⇨</i><span>左右变道</span></div>
+      <div class="tip"><i>⤒</i><span>长按喷气起飞</span></div>
+      <div class="tip"><i>◎</i><span>穿门加速</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="screen hide" id="over">
+  <div class="card">
+    <div class="kicker">本次冲刺结束</div>
+    <h1>车损严重</h1>
+    <div id="overStats"></div>
+    <button class="btn" id="btnRestart">再跑一次</button>
+    <div class="best">按回车键或点击按钮重新开始</div>
+  </div>
+</div>
+
+<script src="build.js"></script>
+</body>
+</html>
